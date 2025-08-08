@@ -1,0 +1,2 @@
+https://engineerhead.github.io/dns-server
+https://datatracker.ietf.org/doc/html/rfc1035
