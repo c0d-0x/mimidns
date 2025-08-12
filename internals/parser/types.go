@@ -1,34 +1,7 @@
 package parser
 
 type (
-	TYPE  uint16
-	CLASS uint8
-)
-
-const (
-	IN CLASS = iota + 1
-	CS
-	CH
-	HS
-)
-
-const (
-	A TYPE = iota + 1
-	NS
-	MD
-	MF
-	CNAME
-	SOA
-	MB
-	MG
-	MR
-	NULL
-	WKS
-	PTR
-	HINFO
-	MINFO
-	MX
-	TXT
+	CLASS string
 )
 
 type SoaType struct {
@@ -42,8 +15,8 @@ type SoaType struct {
 }
 
 type RequestRecods struct {
-	domain string
-	ttl    int64
-	class  CLASS
-	rdata  []byte
+	Name  string
+	TTL   int
+	class string
+	rdata []string
 }
