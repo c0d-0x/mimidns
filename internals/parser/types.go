@@ -17,8 +17,8 @@ type SoaType struct {
 type RequestRecods struct {
 	Name  string
 	TTL   int
-	class string
-	rdata []string
+	Class string
+	RData []string
 }
 
 var RecTypes = []string{

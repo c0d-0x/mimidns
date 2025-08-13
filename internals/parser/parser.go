@@ -11,6 +11,51 @@ import (
 	"strings"
 )
 
+func stripComment(chunk *string, cc string) *string {
+	if chunk == nil {
+		return nil
+	}
+
+	before, _, found := strings.Cut(*chunk, cc)
+	if !found {
+		return chunk
+	}
+
+	return &before
+}
+
+func splitStr(chunk *string, cc string) *[]string {
+	if chunk == nil {
+		return nil
+	}
+
+	reg, _ := regexp.Compile(`\s+`)
+	subs := strings.Split(*chunk, cc)
+	var tmpSubs []string
+	for _, sub := range subs {
+		if tmp := reg.ReplaceAllString(sub, ""); tmp != "" {
+			tmpSubs = append(tmpSubs, tmp)
+		}
+	}
+	return &tmpSubs
+}
+
+func isSingleLinedSOA(slice []string) bool {
+	if slice == nil {
+		return false
+	}
+
+	return slices.Contains(slice, "(") && slices.Contains(slice, ")")
+}
+
+func isValidRecClass(subStr *string) bool {
+	return slices.Contains(RecClasses, *subStr)
+}
+
+func isValidRecType(subStr *string) bool {
+	return slices.Contains(RecTypes, *subStr)
+}
+
 func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *RequestRecods {
 	if name == nil || ttl == nil || class == nil {
 		return nil
@@ -31,53 +76,12 @@ func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *
 		return nil
 	}
 
-	rr := RequestRecods{Name: *name, TTL: *ttl, class: *class, rdata: rData}
-	return &rr
-}
-
-func stripComment(chunk *string, cc string) *string {
-	if chunk == nil {
-		return nil
+	return &RequestRecods{
+		Name:  *name,
+		TTL:   *ttl,
+		Class: *class,
+		RData: rData,
 	}
-
-	before, _, found := strings.Cut(*chunk, cc)
-	if !found {
-		return chunk
-	}
-
-	return &before
-}
-
-func splitchunk(chunk *string, cc string) *[]string {
-	if chunk == nil {
-		return nil
-	}
-
-	reg, _ := regexp.Compile(`\s+`)
-	subs := strings.Split(*chunk, cc)
-	var tmpSubs []string
-	for _, sub := range subs {
-		if tmp := reg.ReplaceAllString(sub, ""); tmp != "" {
-			tmpSubs = append(tmpSubs, tmp)
-		}
-	}
-	return &tmpSubs
-}
-
-func isSingleLinedSOA(chunk []string) bool {
-	if chunk == nil {
-		return false
-	}
-
-	return slices.Contains(chunk, "(") && slices.Contains(chunk, ")")
-}
-
-func isValidRecClass(subStr *string) bool {
-	return slices.Contains(RecClasses, *subStr)
-}
-
-func isValidRecType(subStr *string) bool {
-	return slices.Contains(RecTypes, *subStr)
 }
 
 func ParseMasterFile(fileName string) ([]RequestRecods, error) {
@@ -96,18 +100,18 @@ func ParseMasterFile(fileName string) ([]RequestRecods, error) {
 
 	SoaFound := false
 	for {
-		line, err := stream.ReadString('\n')
+		buffer, err := stream.ReadString('\n')
 		if err != nil {
 			break
 		}
 
-		line = strings.ReplaceAll(line, "\t", " ")
-		line = strings.TrimSpace(line)
-		if line = *stripComment(&line, ";"); line == "" {
+		buffer = strings.ReplaceAll(buffer, "\t", " ")
+		buffer = strings.TrimSpace(buffer)
+		if buffer = *stripComment(&buffer, ";"); buffer == "" {
 			continue
 		}
 
-		subs := *splitchunk(&line, " ")
+		subs := *splitStr(&buffer, " ")
 
 		switch subs[0] {
 		case "$ORIGIN":

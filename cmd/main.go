@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/c0d-0x/mimidns/internals/parser"
+	"github.com/c0d-0x/mimidns/internals/server"
 )
 
 func main() {
@@ -21,5 +22,14 @@ func main() {
 	rrlist = append(rrlist, rrlist2...)
 	for _, rrecord := range rrlist {
 		fmt.Println(rrecord)
+	}
+
+	serv, err := server.NewServer(":3000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := serv.Run(); err != nil {
+		log.Fatal(err)
 	}
 }
