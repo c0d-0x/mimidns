@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
 
 	"github.com/c0d-0x/mimidns/internals/parser"
 )
@@ -10,14 +10,12 @@ import (
 func main() {
 	rrlist, err := parser.ParseMasterFile("zones/google.com.zone")
 	if err != nil {
-		fmt.Println("Error: ", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	rrlist2, err := parser.ParseMasterFile("zones/example.com.zone")
 	if err != nil {
-		fmt.Println("Error: ", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	rrlist = append(rrlist, rrlist2...)

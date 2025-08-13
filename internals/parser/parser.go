@@ -11,37 +11,26 @@ import (
 	"strings"
 )
 
-var RecTypes = []string{
-	"A",
-	"NS",
-	"MD",
-	"MF",
-	"CNAME",
-	"SOA",
-	"MB",
-	"MG",
-	"MR",
-	"NULL",
-	"WKS",
-	"PTR",
-	"HINFO",
-	"MINFO",
-	"MX",
-	"TXT",
-	"AAAA",
-}
-
-var RecClasses = []string{
-	"IN",
-	"CS",
-	"CH",
-	"HS",
-}
-
 func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *RequestRecods {
 	if name == nil || ttl == nil || class == nil {
 		return nil
 	}
+
+	if !isValidRecClass(class) {
+		return nil
+	}
+
+	if !isValidRecType(&rData[0]) {
+		return nil
+	}
+
+	hasSOA := slices.Contains(rData, "SOA")
+	missingParens := !slices.Contains(rData, "(") || !slices.Contains(rData, ")")
+
+	if hasSOA && missingParens {
+		return nil
+	}
+
 	rr := RequestRecods{Name: *name, TTL: *ttl, class: *class, rdata: rData}
 	return &rr
 }
@@ -83,8 +72,12 @@ func isSingleLinedSOA(chunk []string) bool {
 	return slices.Contains(chunk, "(") && slices.Contains(chunk, ")")
 }
 
-func isValidRecClass(subStr string) bool {
-	return slices.Contains(RecClasses, subStr)
+func isValidRecClass(subStr *string) bool {
+	return slices.Contains(RecClasses, *subStr)
+}
+
+func isValidRecType(subStr *string) bool {
+	return slices.Contains(RecTypes, *subStr)
 }
 
 func ParseMasterFile(fileName string) ([]RequestRecods, error) {
@@ -126,12 +119,12 @@ func ParseMasterFile(fileName string) ([]RequestRecods, error) {
 			defaultTTL, _ = strconv.Atoi(subs[1])
 			continue
 		case "$INCLUDE":
-			/* TODO: to be handle properly with goroutines */
+			/* TODO: To be handled properly with goroutines */
 			continue
 
 		}
 
-		if !isValidRecClass(subs[0]) {
+		if !isValidRecClass(&subs[0]) {
 			if subs[0] != "@" {
 				if defaultDomain == "" {
 					baseDomain = subs[0]
