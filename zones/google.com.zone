@@ -1,0 +1,25 @@
+$ORIGIN google.com.
+$TTL 300
+
+@   IN  SOA ns1.google.com. dns-admin.google.com. (
+        2025081201 ; Serial
+        21600      ; Refresh
+        3600       ; Retry
+        1209600    ; Expire
+        300        ; Minimum TTL
+)
+
+        IN  NS  ns1.google.com.
+        IN  NS  ns2.google.com.
+
+        IN  MX  10 smtp.google.com.
+        IN  MX  20 alt-smtp.google.com.
+
+@       IN  A   142.250.190.14
+
+ns1     IN  A   216.239.32.10
+ns2     IN  A   216.239.34.10
+
+www     IN  CNAME   google.com.
+mail    IN  CNAME   smtp.google.com.
+

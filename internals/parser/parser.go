@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-var RecTypes []string = []string{
+var RecTypes = []string{
 	"A",
 	"NS",
 	"MD",
@@ -30,7 +31,7 @@ var RecTypes []string = []string{
 	"AAAA",
 }
 
-var RecClasses []string = []string{
+var RecClasses = []string{
 	"IN",
 	"CS",
 	"CH",
@@ -38,6 +39,9 @@ var RecClasses []string = []string{
 }
 
 func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *RequestRecods {
+	if name == nil || ttl == nil || class == nil {
+		return nil
+	}
 	rr := RequestRecods{Name: *name, TTL: *ttl, class: *class, rdata: rData}
 	return &rr
 }
@@ -55,32 +59,35 @@ func stripComment(chunk *string, cc string) *string {
 	return &before
 }
 
-func splitchunk(chunk *string, cc string) []string {
+func splitchunk(chunk *string, cc string) *[]string {
 	if chunk == nil {
 		return nil
 	}
 
-	reg, _ := regexp.Compile("s+")
+	reg, _ := regexp.Compile(`\s+`)
 	subs := strings.Split(*chunk, cc)
-	for i, sub := range subs {
-		subs[i] = reg.ReplaceAllString(sub, "")
+	var tmpSubs []string
+	for _, sub := range subs {
+		if tmp := reg.ReplaceAllString(sub, ""); tmp != "" {
+			tmpSubs = append(tmpSubs, tmp)
+		}
 	}
-	return subs
+	return &tmpSubs
 }
 
-func isSingleLinedSOA(chunk *string) bool {
+func isSingleLinedSOA(chunk []string) bool {
 	if chunk == nil {
 		return false
 	}
 
-	return strings.Contains(*chunk, "(") && strings.Contains(*chunk, ")")
+	return slices.Contains(chunk, "(") && slices.Contains(chunk, ")")
 }
 
 func isValidRecClass(subStr string) bool {
 	return slices.Contains(RecClasses, subStr)
 }
 
-func ParseMaster(fileName string) ([]RequestRecods, error) {
+func ParseMasterFile(fileName string) ([]RequestRecods, error) {
 	fd, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -90,8 +97,8 @@ func ParseMaster(fileName string) ([]RequestRecods, error) {
 
 	var tmpRecord *RequestRecods
 	var rrlist []RequestRecods
-	defaultDomain := ""
-	baseDomain := ""
+	var defaultDomain string
+	var baseDomain string
 	defaultTTL := 0
 
 	SoaFound := false
@@ -101,25 +108,14 @@ func ParseMaster(fileName string) ([]RequestRecods, error) {
 			break
 		}
 
-		line = strings.TrimSpace(line)
 		line = strings.ReplaceAll(line, "\t", " ")
+		line = strings.TrimSpace(line)
 		if line = *stripComment(&line, ";"); line == "" {
 			continue
 		}
 
-		if strings.Contains(line, "SOA") && !SoaFound {
-			SoaFound = true
-			if !isSingleLinedSOA(&line) {
-				/* parse muli-lined SOA  */
-				continue
-			} else {
-				/* parse single-lined SOA  */
-				/* fmt.Println("works") */
-				continue
-			}
-		}
+		subs := *splitchunk(&line, " ")
 
-		subs := splitchunk(&line, " ")
 		switch subs[0] {
 		case "$ORIGIN":
 			defaultDomain = subs[1]
@@ -129,17 +125,52 @@ func ParseMaster(fileName string) ([]RequestRecods, error) {
 		case "$TTL":
 			defaultTTL, _ = strconv.Atoi(subs[1])
 			continue
+		case "$INCLUDE":
+			/* TODO: to be handle properly with goroutines */
+			continue
+
 		}
 
 		if !isValidRecClass(subs[0]) {
 			if subs[0] != "@" {
-				defaultDomain = fmt.Sprintf("%s.%s", subs[0], baseDomain)
+				if defaultDomain == "" {
+					baseDomain = subs[0]
+					defaultDomain = subs[0]
+				} else {
+					defaultDomain = fmt.Sprintf("%s.%s", subs[0], baseDomain)
+				}
+			} else {
+				if defaultDomain == "" {
+					errStr := fmt.Sprintf("No base damain found in: %s ", fileName)
+					return nil, errors.New(errStr)
+				}
 			}
+
+			if slices.Contains(subs, "SOA") && !SoaFound {
+				SoaFound = true // only a single SOA can be found in a master file
+				if !isSingleLinedSOA(subs) {
+					/* parse muli-lined SOA  */
+					for range 6 {
+						opt, _ := stream.ReadString('\n')
+
+						opt = strings.ReplaceAll(opt, "\t", " ")
+						opt = *stripComment(&opt, ";")
+						opt = strings.TrimSpace(opt)
+						if opt != "" {
+							subs = append(subs, opt)
+						}
+					}
+				}
+			}
+
 			subs = subs[1:]
 		}
 
-		tmpRecord = newResourcesRecord(&defaultDomain, &defaultTTL, &subs[0], subs[1:])
-		/* fmt.Println("name: ", (*tmpRecord).Name, "ttl: ", tmpRecord.TTL, "rData: ", tmpRecord.rdata) */
+		if tmpRecord = newResourcesRecord(&defaultDomain, &defaultTTL, &subs[0], subs[1:]); tmpRecord == nil {
+			errStr := fmt.Sprintf("Invalid record in: %s\n", fileName)
+			return nil, errors.New(errStr)
+		}
+
 		rrlist = append(rrlist, *tmpRecord)
 
 	}
