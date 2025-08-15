@@ -2,6 +2,7 @@ package parser
 
 type (
 	CLASS string
+	TYPE  string
 )
 
 type SoaType struct {
