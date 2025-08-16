@@ -21,8 +21,8 @@ type header struct {
 
 type query struct {
 	NAME  string
-	TYPE  int16
-	CLASS int16
+	TYPE  [2]byte
+	CLASS [2]byte
 }
 
 type answer struct {
