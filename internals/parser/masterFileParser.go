@@ -9,7 +9,35 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/c0d-0x/mimidns/internals/globals"
 )
+
+var Recglobals = []string{
+	"A",
+	"NS",
+	"MD",
+	"MF",
+	"CNAME",
+	"SOA",
+	"MB",
+	"MG",
+	"MR",
+	"NULL",
+	"WKS",
+	"PTR",
+	"HINFO",
+	"MINFO",
+	"MX",
+	"TXT",
+}
+
+var RecClasses = []string{
+	"IN",
+	"CS",
+	"CH",
+	"HS",
+}
 
 func stripComment(chunk *string, cc string) *string {
 	if chunk == nil {
@@ -53,10 +81,10 @@ func isValidRecClass(subStr *string) bool {
 }
 
 func isValidRecType(subStr *string) bool {
-	return slices.Contains(RecTypes, *subStr)
+	return slices.Contains(Recglobals, *subStr)
 }
 
-func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *RequestRecods {
+func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *globals.RequestRecord {
 	if name == nil || ttl == nil || class == nil {
 		return nil
 	}
@@ -76,15 +104,16 @@ func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *
 		return nil
 	}
 
-	return &RequestRecods{
+	return &globals.RequestRecord{
 		Name:  *name,
 		TTL:   *ttl,
 		Class: *class,
-		RData: rData,
+		Type:  rData[0],
+		RData: rData[1:],
 	}
 }
 
-func ParseMasterFile(fileName string) ([]RequestRecods, error) {
+func ParseMasterFile(fileName string) ([]globals.RequestRecord, error) {
 	fd, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -92,8 +121,8 @@ func ParseMasterFile(fileName string) ([]RequestRecods, error) {
 
 	stream := bufio.NewReader(fd)
 
-	var tmpRecord *RequestRecods
-	var rrlist []RequestRecods
+	var tmpRecord *globals.RequestRecord
+	var rrlist []globals.RequestRecord
 	var defaultDomain string
 	var baseDomain string
 	defaultTTL := 0

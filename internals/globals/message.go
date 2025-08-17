@@ -1,16 +1,11 @@
-package server
+package globals
 
-import (
-	"net"
+const (
+	HEADERlENGTH = 12
+	ISRESPONSE   = uint16(0x8000)
 )
 
-type Server struct {
-	Conn net.UDPConn
-	Addr net.UDPAddr
-	buf  []byte
-}
-
-type header struct {
+type Header struct {
 	ID      uint16
 	FLAG    [2]byte
 	QDCOUNT uint16
@@ -19,13 +14,13 @@ type header struct {
 	ARCOUNT uint16
 }
 
-type query struct {
+type Query struct {
 	NAME  string
 	TYPE  [2]byte
 	CLASS [2]byte
 }
 
-type answer struct {
+type Answer struct {
 	NAME     string
 	TYPE     uint16
 	CLASS    uint16
@@ -35,9 +30,9 @@ type answer struct {
 }
 
 type Message struct {
-	Header     header
-	Question   []query
-	Answer     []answer
+	MHeader    Header
+	Question   []Query
+	Answer     []Answer
 	Authority  []byte
 	Additional []byte
 }
