@@ -16,8 +16,8 @@ type Header struct {
 
 type Query struct {
 	NAME  string
-	TYPE  [2]byte
-	CLASS [2]byte
+	TYPE  uint16
+	CLASS uint16
 }
 
 type Answer struct {
@@ -33,6 +33,6 @@ type Message struct {
 	MHeader    Header
 	Question   []Query
 	Answer     []Answer
-	Authority  []byte
-	Additional []byte
+	Authority  []Answer
+	Additional []Answer
 }

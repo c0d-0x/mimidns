@@ -27,20 +27,27 @@ func NewServer(addr string) (*Server, error) {
 
 func (s *Server) handleConn() {
 	for {
-		_, addr, err := s.Conn.ReadFromUDP(s.buf[:])
+		n, addr, err := s.Conn.ReadFromUDP(s.buf)
 		if err != nil {
 			log.Println(err)
 		}
 
-		message, err := parser.ParseMessage(s.buf)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("msg: ", message)
-		}
+		data := make([]byte, n)
+		copy(data, s.buf[:n])
 
-		/* TODO: decode Message and send a respond */
-		s.Conn.WriteToUDP([]byte("example.com 300 A 127.0.0.1\r\n"), addr)
+		go func() {
+			message, err := parser.ParseMessage(data)
+
+			if err != nil {
+				log.Println(err)
+			} else {
+				log.Println("msg: ", message)
+			}
+
+			/*TODO: send a respond */
+			s.Conn.WriteToUDP([]byte("example.com 300 A 127.0.0.1\r\n"), addr)
+		}()
+		s.buf = s.buf[0:]
 
 	}
 }

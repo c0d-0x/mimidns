@@ -9,7 +9,7 @@ import (
 	"github.com/c0d-0x/mimidns/internals/globals"
 )
 
-func parseName(buf []byte) (*string, uint8) {
+func parseName(buf []byte) (*string, uint16) {
 	if buf == nil {
 		return nil, 0
 	}
@@ -24,10 +24,14 @@ func parseName(buf []byte) (*string, uint8) {
 			break
 		}
 
+		if cap(tmp) <= int(labelLen) {
+			break
+		}
+
 		_name = append(_name, string(tmp[1:labelLen+1]))
 		nameLength += labelLen + 1
-		tmp = tmp[labelLen+1:]
 
+		tmp = tmp[labelLen+1:]
 	}
 
 	if _name == nil {
@@ -36,7 +40,34 @@ func parseName(buf []byte) (*string, uint8) {
 
 	name := strings.Join(_name, ".")
 	name = strings.TrimSpace(name)
-	return &name, nameLength + 1
+	return &name, uint16(nameLength + 1)
+}
+
+func parseAnswer(buf []byte, count uint16) ([]globals.Answer, uint16) {
+	nbSum := uint16(0)
+	authorities := []globals.Answer{}
+	for range count {
+		name, nb := parseName(buf)
+		if nb == 0 {
+			return nil, 0
+		}
+		buf = buf[nb:]
+		authority := &globals.Answer{
+			NAME:     *name,
+			TYPE:     binary.BigEndian.Uint16(buf[:2]),
+			CLASS:    binary.BigEndian.Uint16(buf[2:4]),
+			TTL:      binary.BigEndian.Uint32(buf[4:8]),
+			RDLENGTH: binary.BigEndian.Uint16(buf[8:10]),
+		}
+
+		authority.RDATA = buf[10 : 10+authority.RDLENGTH]
+		nbSum += 10 + authority.RDLENGTH
+
+		authorities = append(authorities, *authority)
+
+	}
+
+	return authorities, nbSum
 }
 
 func ParseMessage(buf []byte) (*globals.Message, error) {
@@ -52,23 +83,44 @@ func ParseMessage(buf []byte) (*globals.Message, error) {
 	/* header is 12 bytes */
 	buf = buf[12:]
 
+	if messageType == globals.ISRESPONSE {
+		/* not handling responses yet */
+		return nil, errors.New("invalid message")
+	}
+
 	/* TODO: parse message accordingly */
-	if globals.ISRESPONSE != messageType {
-		/* parse query */
-		for range message.MHeader.QDCOUNT {
-			qname, len := parseName(buf)
-			if qname == nil || len == 0 {
-				return nil, errors.New("invalid qname")
-			}
-			buf = buf[len:]
-			_query := globals.Query{
-				NAME:  *qname,
-				TYPE:  [2]byte(buf[:2]),
-				CLASS: [2]byte(buf[2:4]),
-			}
-			buf = buf[4:]
-			message.Question = append(message.Question, _query)
+	/* parse query */
+	for range message.MHeader.QDCOUNT {
+		qname, len := parseName(buf)
+		if qname == nil || len == 0 {
+			return nil, errors.New("invalid qname")
 		}
+		buf = buf[len:]
+		_query := globals.Query{
+			NAME:  *qname,
+			TYPE:  binary.BigEndian.Uint16(buf[:2]),
+			CLASS: binary.BigEndian.Uint16(buf[2:4]),
+		}
+		buf = buf[4:]
+		message.Question = append(message.Question, _query)
+	}
+
+	answers, n := parseAnswer(buf, message.MHeader.ANCOUNT)
+	if answers != nil {
+		message.Answer = append(message.Answer, answers...)
+	}
+
+	buf = buf[n:]
+	authorities, n := parseAnswer(buf, message.MHeader.NSCOUNT)
+	if authorities != nil {
+		message.Answer = append(message.Answer, authorities...)
+	}
+
+	buf = buf[n:]
+	additionals, n := parseAnswer(buf, message.MHeader.ARCOUNT)
+
+	if additionals != nil {
+		message.Additional = append(message.Additional, additionals...)
 	}
 
 	return &message, nil
