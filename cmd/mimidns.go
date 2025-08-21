@@ -24,7 +24,7 @@ func main() {
 		fmt.Println(rrecord)
 	}
 
-	serv, err := server.NewServer(":3000")
+	serv, err := server.NewServer(":3000", rrlist)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -10,7 +10,7 @@ type SoaType struct {
 	minimum int
 }
 
-type RequestRecord struct {
+type ResourceRecord struct {
 	Name  string
 	TTL   int
 	Class string

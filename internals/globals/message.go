@@ -16,17 +16,17 @@ type Header struct {
 
 type Query struct {
 	NAME  string
-	TYPE  uint16
-	CLASS uint16
+	TYPE  MessageType
+	CLASS MessageClass
 }
 
 type Answer struct {
 	NAME     string
-	TYPE     uint16
-	CLASS    uint16
+	TYPE     MessageType
+	CLASS    MessageClass
 	TTL      uint32
 	RDLENGTH uint16
-	RDATA    []byte
+	RDATA    []string
 }
 
 type Message struct {

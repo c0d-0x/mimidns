@@ -84,7 +84,7 @@ func isValidRecType(subStr *string) bool {
 	return slices.Contains(Recglobals, *subStr)
 }
 
-func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *globals.RequestRecord {
+func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *globals.ResourceRecord {
 	if name == nil || ttl == nil || class == nil {
 		return nil
 	}
@@ -104,7 +104,7 @@ func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *
 		return nil
 	}
 
-	return &globals.RequestRecord{
+	return &globals.ResourceRecord{
 		Name:  *name,
 		TTL:   *ttl,
 		Class: *class,
@@ -113,7 +113,7 @@ func newResourcesRecord(name *string, ttl *int, class *string, rData []string) *
 	}
 }
 
-func ParseMasterFile(fileName string) ([]globals.RequestRecord, error) {
+func ParseMasterFile(fileName string) ([]globals.ResourceRecord, error) {
 	fd, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -121,8 +121,8 @@ func ParseMasterFile(fileName string) ([]globals.RequestRecord, error) {
 
 	stream := bufio.NewReader(fd)
 
-	var tmpRecord *globals.RequestRecord
-	var rrlist []globals.RequestRecord
+	var tmpRecord *globals.ResourceRecord
+	var rrlist []globals.ResourceRecord
 	var defaultDomain string
 	var baseDomain string
 	defaultTTL := 0

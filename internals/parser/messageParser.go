@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/c0d-0x/mimidns/internals/globals"
@@ -20,11 +21,8 @@ func parseName(buf []byte) (*string, uint16) {
 	nameLength := uint8(0)
 	for {
 		labelLen := tmp[0]
-		if labelLen == 0 {
-			break
-		}
 
-		if cap(tmp) <= int(labelLen) {
+		if cap(tmp) <= int(labelLen) || labelLen == 0 {
 			break
 		}
 
@@ -40,34 +38,36 @@ func parseName(buf []byte) (*string, uint16) {
 
 	name := strings.Join(_name, ".")
 	name = strings.TrimSpace(name)
+	name += "."
 	return &name, uint16(nameLength + 1)
 }
 
 func parseAnswer(buf []byte, count uint16) ([]globals.Answer, uint16) {
 	nbSum := uint16(0)
-	authorities := []globals.Answer{}
+	answers := []globals.Answer{}
 	for range count {
 		name, nb := parseName(buf)
 		if nb == 0 {
-			return nil, 0
+			break
 		}
 		buf = buf[nb:]
-		authority := &globals.Answer{
+		answer := &globals.Answer{
 			NAME:     *name,
-			TYPE:     binary.BigEndian.Uint16(buf[:2]),
-			CLASS:    binary.BigEndian.Uint16(buf[2:4]),
+			TYPE:     globals.MessageType(binary.BigEndian.Uint16(buf[:2])),
+			CLASS:    globals.MessageClass(binary.BigEndian.Uint16(buf[2:4])),
 			TTL:      binary.BigEndian.Uint32(buf[4:8]),
 			RDLENGTH: binary.BigEndian.Uint16(buf[8:10]),
 		}
 
-		authority.RDATA = buf[10 : 10+authority.RDLENGTH]
-		nbSum += 10 + authority.RDLENGTH
+		answer.RDATA = append(answer.RDATA, string(buf[10:10+answer.RDLENGTH]))
+		nbSum += 10 + answer.RDLENGTH
 
-		authorities = append(authorities, *authority)
+		fmt.Println("authority: ", answer)
+		answers = append(answers, *answer)
 
 	}
 
-	return authorities, nbSum
+	return answers, nbSum
 }
 
 func ParseMessage(buf []byte) (*globals.Message, error) {
@@ -79,14 +79,14 @@ func ParseMessage(buf []byte) (*globals.Message, error) {
 	reader := bytes.NewReader(buf)
 	binary.Read(reader, binary.BigEndian, &message.MHeader)
 
-	messageType := binary.BigEndian.Uint16(message.MHeader.FLAG[:2]) & globals.ISRESPONSE
+	/* messageType := binary.BigEndian.Uint16(message.MHeader.FLAG[:2]) & globals.ISRESPONSE */
 	/* header is 12 bytes */
 	buf = buf[12:]
 
-	if messageType == globals.ISRESPONSE {
-		/* not handling responses yet */
-		return nil, errors.New("invalid message")
-	}
+	/* if messageType == globals.ISRESPONSE { */
+	/* not handling responses yet */
+	/* 	return nil, errors.New("invalid message") */
+	/* } */
 
 	/* TODO: parse message accordingly */
 	/* parse query */
@@ -98,8 +98,8 @@ func ParseMessage(buf []byte) (*globals.Message, error) {
 		buf = buf[len:]
 		_query := globals.Query{
 			NAME:  *qname,
-			TYPE:  binary.BigEndian.Uint16(buf[:2]),
-			CLASS: binary.BigEndian.Uint16(buf[2:4]),
+			TYPE:  globals.MessageType(binary.BigEndian.Uint16(buf[:2])),
+			CLASS: globals.MessageClass(binary.BigEndian.Uint16(buf[2:4])),
 		}
 		buf = buf[4:]
 		message.Question = append(message.Question, _query)
@@ -113,7 +113,7 @@ func ParseMessage(buf []byte) (*globals.Message, error) {
 	buf = buf[n:]
 	authorities, n := parseAnswer(buf, message.MHeader.NSCOUNT)
 	if authorities != nil {
-		message.Answer = append(message.Answer, authorities...)
+		message.Authority = append(message.Authority, authorities...)
 	}
 
 	buf = buf[n:]

@@ -4,50 +4,53 @@ import (
 	"log"
 	"net"
 
+	"github.com/c0d-0x/mimidns/internals/globals"
 	"github.com/c0d-0x/mimidns/internals/parser"
 )
 
 type Server struct {
-	Conn net.UDPConn
-	Addr net.UDPAddr
-	buf  []byte
+	Conn            net.UDPConn
+	Addr            net.UDPAddr
+	ResourseRecords []globals.ResourceRecord
 }
 
-func NewServer(addr string) (*Server, error) {
+func NewServer(addr string, rr []globals.ResourceRecord) (*Server, error) {
 	resolvedAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		Addr: *resolvedAddr,
-		buf:  make([]byte, 512),
+		Addr:            *resolvedAddr,
+		ResourseRecords: rr,
 	}, nil
 }
 
 func (s *Server) handleConn() {
+	buf := make([]byte, 512)
 	for {
-		n, addr, err := s.Conn.ReadFromUDP(s.buf)
+		n, addr, err := s.Conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Println(err)
 		}
 
 		data := make([]byte, n)
-		copy(data, s.buf[:n])
+		copy(data, buf[:n])
 
 		go func() {
 			message, err := parser.ParseMessage(data)
-
 			if err != nil {
 				log.Println(err)
-			} else {
-				log.Println("msg: ", message)
+				return
 			}
 
-			/*TODO: send a respond */
-			s.Conn.WriteToUDP([]byte("example.com 300 A 127.0.0.1\r\n"), addr)
+			log.Println("msg: ", message)
+			response := prepareRespond(*message, s.ResourseRecords)
+
+			log.Println("response: ", response)
+			s.Conn.WriteToUDP(response.ToBytes(), addr)
 		}()
-		s.buf = s.buf[0:]
+		buf = buf[0:]
 
 	}
 }
