@@ -1,12 +1,41 @@
 # 🌐 mimidns
 
-mimidns is a minimal DNS server implementation in Go.
+mimidns is a minimal authoritative DNS server implementation in Go.
 It parses DNS master zone files into ResourceRecord structs, then decodes DNS messages and replies with the correct records.
 
 Perfect for learning how DNS really works at the packet level.
 
 ## How to run this project
 
+### Prerequisites
+
++ Go 1.21+
+
++ A zone file (e.g., ./zones/example.com.zone)
+
++ dig (from bind9-dnsutils/bind-utils) and CLI tool for testing
+
+```bash
+# 1) Clone & prepare
+git clone https://github.com/c0d_0xmimidns
+cd mimidns
+
+# 2) run
+go run cmd/mimidns.go
+
+# 3) Build
+make
+
+# 4) Run the server
+./mimidns -h # or
+
+#OUTPUT:
+ # Usage of ./mimidns:
+  # -p string
+        # specify the port to run the server (default "3000")
+  # -zones string
+        # <path> specify zones' directory (default "zones")
+```
 ## ✨ Features
 
 Parse zone/master files into Go structs.
@@ -121,40 +150,7 @@ participant ZoneFile
     mimidns-->>Client: DNS Response (Answer: 192.0.2.1)
 ```
 
-## How to run this project
 
-The exact command may differ depending on your repo layout. Use the pattern that matches your tree.
-
-> [!NOTE]
-> Prerequisites
-
-> Go 1.21+
-
-> A zone file (e.g., ./zones/example.com.zone)
-
-> dig (from bind9-dnsutils/bind-utils) for testing
-
-```bash
-# 1) Clone & prepare
-git clone https://github.com/mimidns
-cd mimidns
-
-# 2) run
-go run cmd/mimidns.go
-
-# 3) Build
-make
-
-# 4) Run the server
-./mimidns -h # or
-
-#OUTPUT:
- # Usage of ./mimidns:
-  # -p string
-        # specify the port to run the server (default "3000")
-  # -zones string
-        # <path> specify zones' directory (default "zones")
-```
 
 ## 🤝 Contributing
 
