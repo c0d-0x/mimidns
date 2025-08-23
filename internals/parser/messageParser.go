@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/c0d-0x/mimidns/internals/globals"
@@ -15,21 +14,20 @@ func parseName(buf []byte) (*string, uint16) {
 		return nil, 0
 	}
 
-	tmp := buf
 	var _name []string
 
 	nameLength := uint8(0)
 	for {
-		labelLen := tmp[0]
+		labelLen := buf[0]
 
-		if cap(tmp) <= int(labelLen) || labelLen == 0 {
+		if len(buf) <= int(labelLen+1) || labelLen == 0 {
 			break
 		}
 
-		_name = append(_name, string(tmp[1:labelLen+1]))
+		_name = append(_name, string(buf[1:labelLen+1]))
 		nameLength += labelLen + 1
 
-		tmp = tmp[labelLen+1:]
+		buf = buf[labelLen+1:]
 	}
 
 	if _name == nil {
@@ -38,7 +36,7 @@ func parseName(buf []byte) (*string, uint16) {
 
 	name := strings.Join(_name, ".")
 	name = strings.TrimSpace(name)
-	name += "."
+	name += "." // terminating '.'
 	return &name, uint16(nameLength + 1)
 }
 
@@ -62,7 +60,6 @@ func parseAnswer(buf []byte, count uint16) ([]globals.Answer, uint16) {
 		answer.RDATA = append(answer.RDATA, string(buf[10:10+answer.RDLENGTH]))
 		nbSum += 10 + answer.RDLENGTH
 
-		fmt.Println("authority: ", answer)
 		answers = append(answers, *answer)
 
 	}
@@ -72,29 +69,21 @@ func parseAnswer(buf []byte, count uint16) ([]globals.Answer, uint16) {
 
 func ParseMessage(buf []byte) (*globals.Message, error) {
 	message := globals.Message{}
-	if len(buf) < globals.HEADERlENGTH {
+	if len(buf) <= globals.HEADERlENGTH {
 		return nil, errors.New("invalid message")
 	}
 
 	reader := bytes.NewReader(buf)
 	binary.Read(reader, binary.BigEndian, &message.MHeader)
 
-	/* messageType := binary.BigEndian.Uint16(message.MHeader.FLAG[:2]) & globals.ISRESPONSE */
-	/* header is 12 bytes */
-	buf = buf[12:]
+	buf = buf[globals.HEADERlENGTH:]
 
-	/* if messageType == globals.ISRESPONSE { */
-	/* not handling responses yet */
-	/* 	return nil, errors.New("invalid message") */
-	/* } */
-
-	/* TODO: parse message accordingly */
-	/* parse query */
 	for range message.MHeader.QDCOUNT {
 		qname, len := parseName(buf)
-		if qname == nil || len == 0 {
+		if qname == nil {
 			return nil, errors.New("invalid qname")
 		}
+
 		buf = buf[len:]
 		_query := globals.Query{
 			NAME:  *qname,
@@ -117,10 +106,10 @@ func ParseMessage(buf []byte) (*globals.Message, error) {
 	}
 
 	buf = buf[n:]
-	additionals, n := parseAnswer(buf, message.MHeader.ARCOUNT)
+	additional, _ := parseAnswer(buf, message.MHeader.ARCOUNT)
 
-	if additionals != nil {
-		message.Additional = append(message.Additional, additionals...)
+	if additional != nil {
+		message.Additional = append(message.Additional, additional...)
 	}
 
 	return &message, nil

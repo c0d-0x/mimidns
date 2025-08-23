@@ -119,6 +119,7 @@ func ParseMasterFile(fileName string) ([]globals.ResourceRecord, error) {
 		return nil, err
 	}
 
+	defer fd.Close()
 	stream := bufio.NewReader(fd)
 
 	var tmpRecord *globals.ResourceRecord
@@ -201,6 +202,5 @@ func ParseMasterFile(fileName string) ([]globals.ResourceRecord, error) {
 
 	}
 
-	defer fd.Close()
 	return rrlist, nil
 }

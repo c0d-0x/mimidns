@@ -20,21 +20,18 @@ func resolver(message *globals.Message, resourceRecords []globals.ResourceRecord
 }
 
 func resourceRecordsToAnswers(rrs []globals.ResourceRecord) []globals.Answer {
-	ans := []globals.Answer{}
+	answers := []globals.Answer{}
 	for _, rr := range rrs {
-		/* TODO: conver rr.RDATA [] string to []byte	 */
 		aa := &globals.Answer{NAME: rr.Name, TTL: uint32(rr.TTL)}
 		aa.TYPE.StrToMessageType(rr.Type)
 		aa.CLASS.StrToMessageClass(rr.Class)
 
-		for _, data := range rr.RData {
-			aa.RDATA = append(aa.RDATA, data)
-		}
+		aa.RDATA = append(aa.RDATA, rr.RData...)
 
 		aa.RDLENGTH = uint16(len(aa.RDATA))
-		ans = append(ans, *aa)
+		answers = append(answers, *aa)
 	}
-	return ans
+	return answers
 }
 
 func prepareRespond(message globals.Message, resourceRecords []globals.ResourceRecord) *globals.Message {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
 
@@ -37,6 +38,7 @@ func (s *Server) handleConn() {
 		data := make([]byte, n)
 		copy(data, buf[:n])
 
+		log.Printf("Request from: %v\n", addr.String())
 		go func() {
 			message, err := parser.ParseMessage(data)
 			if err != nil {
@@ -44,10 +46,7 @@ func (s *Server) handleConn() {
 				return
 			}
 
-			log.Println("msg: ", message)
 			response := prepareRespond(*message, s.ResourseRecords)
-
-			log.Println("response: ", response)
 			s.Conn.WriteToUDP(response.ToBytes(), addr)
 		}()
 		buf = buf[0:]
@@ -61,6 +60,7 @@ func (s *Server) Run() error {
 		return err
 	}
 	defer conn.Close()
+	fmt.Printf("Running @127.0.0.1%s\n\n", s.Addr.String())
 
 	s.Conn = *conn
 	s.handleConn()
