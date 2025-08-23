@@ -17,11 +17,11 @@ Perfect for learning how DNS really works at the packet level.
 
 ```bash
 # 1) Clone & prepare
-git clone https://github.com/c0d_0xmimidns
+git clone https://github.com/c0d_0x/mimidns
 cd mimidns
 
 # 2) run
-go run cmd/mimidns.go
+go run ./cmd/mimidns
 
 # 3) Build
 make
@@ -78,7 +78,6 @@ type Header struct {
     ARCOUNT uint16
 }
 
-
 //Question
 type Query struct {
     NAME string
@@ -96,7 +95,6 @@ type Answer struct {
     RDATA []string
 }
 
-
 // Full Message
 type Message struct {
     MHeader Header
@@ -105,7 +103,6 @@ type Message struct {
     Authority []Answer
     Additional []Answer
 }
-
 
 ```
 
