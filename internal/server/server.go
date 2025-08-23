@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/c0d-0x/mimidns/internals/globals"
-	"github.com/c0d-0x/mimidns/internals/parser"
+	"github.com/c0d-0x/mimidns/internal/globals"
+	"github.com/c0d-0x/mimidns/internal/parser"
 )
 
 type Server struct {

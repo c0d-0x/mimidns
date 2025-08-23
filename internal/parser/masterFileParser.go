@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/c0d-0x/mimidns/internals/globals"
+	"github.com/c0d-0x/mimidns/internal/globals"
 )
 
 var Recglobals = []string{

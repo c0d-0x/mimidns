@@ -6,7 +6,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/c0d-0x/mimidns/internals/globals"
+	"github.com/c0d-0x/mimidns/internal/globals"
 )
 
 func GetZonefiles(rootPath string) ([]string, error) {
