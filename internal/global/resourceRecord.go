@@ -1,4 +1,4 @@
-package globals
+package global
 
 type ResourceRecord struct {
 	Name  string

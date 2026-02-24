@@ -20,13 +20,13 @@ func main() {
 		log.Fatal("no zone entries")
 	}
 
-	serv, err := server.NewServer(":"+*port, rrlist)
+	server, err := server.NewServer(":"+*port, rrlist)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	globals.DrawASCIIArt()
-	if err := serv.Run(); err != nil {
+	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

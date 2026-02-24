@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"log"
 
-	"github.com/c0d-0x/mimidns/internal/globals"
+	"github.com/c0d-0x/mimidns/internal/global"
 )
 
 func resolver(message *globals.Message, resourceRecords []globals.ResourceRecord) []globals.ResourceRecord {

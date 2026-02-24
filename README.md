@@ -1,19 +1,17 @@
-# 🌐 mimidns
+# MIMIDNS
 
-mimidns is a minimal authoritative DNS server implementation in Go.
+This is a minimal authoritative DNS server implementation in Go.
 It parses DNS master zone files into ResourceRecord structs, then decodes DNS messages and replies with the correct records.
-
-Perfect for learning how DNS really works at the packet level.
 
 ## How to run this project
 
 ### Prerequisites
 
-+ Go 1.21+
+- Go 1.21+
 
-+ A zone file (e.g., ./zones/example.com.zone)
+- A zone file (e.g., ./zones/example.com.zone)
 
-+ dig (from bind9-dnsutils/bind-utils) and CLI tool for testing
+- dig (from bind9-dnsutils/bind-utils) and CLI tool for testing
 
 ```bash
 # 1) Clone & prepare
@@ -36,7 +34,8 @@ make
   # -zones string
         # <path> specify zones' directory (default "zones")
 ```
-## ✨ Features
+
+## Features
 
 Parse zone/master files into Go structs.
 
@@ -46,7 +45,7 @@ Reply to client requests with matching records.
 
 Lightweight, hackable, and easy to extend.
 
-## 📖 How It Works
+## How It Works
 
 ### 1. Parse Zone Files → Resource Records
 
@@ -106,7 +105,7 @@ type Message struct {
 
 ```
 
-## 🛠️ Usage
+## Usage
 
 ### 1. Example Zone File (example.com.zone)
 
@@ -131,25 +130,7 @@ example.com. 3600 IN A 192.0.2.1
 
 ```
 
-## 📊 Example Flow
-
-Here’s how a typical DNS query travels through mimidns:
-
-```mermaid
-sequenceDiagram
-participant Client
-participant mimidns
-participant ZoneFile
-
-    Client->>mimidns: Query (A example.com)
-    mimidns->>ZoneFile: Lookup ResourceRecord
-    ZoneFile-->>mimidns: example.com → 192.0.2.1
-    mimidns-->>Client: DNS Response (Answer: 192.0.2.1)
-```
-
-
-
-## 🤝 Contributing
+## Contributing
 
 This project is built as a learning tool first.
 Feel free to fork, experiment, and open issues or PRs!

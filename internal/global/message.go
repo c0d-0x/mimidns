@@ -1,4 +1,4 @@
-package globals
+package global
 
 import "encoding/binary"
 

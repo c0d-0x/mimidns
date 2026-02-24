@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/c0d-0x/mimidns/internal/globals"
+	"github.com/c0d-0x/mimidns/internal/global"
 	"github.com/c0d-0x/mimidns/internal/parser"
 )
 
